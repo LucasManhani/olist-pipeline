@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: olist_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - olist_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: olist_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - olist_network
+
+volumes:
+  postgres_data:
+
+networks:
+  olist_network:
+    driver: bridge

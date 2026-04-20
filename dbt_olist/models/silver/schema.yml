@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: silver_orders
+    description: "Pedidos limpos com nomes padronizados"
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: silver_customers
+    description: "Clientes com cidade e estado padronizados"
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        tests:
+          - not_null
+
+  - name: silver_order_items
+    description: "Itens dos pedidos"
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: order_item_id
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+      - name: seller_id
+        tests:
+          - not_null
+
+  - name: silver_order_payments
+    description: "Pagamentos dos pedidos"
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: payment_sequential
+        tests:
+          - not_null
+
+  - name: silver_order_reviews
+    description: "Avaliações dos pedidos"
+    columns:
+      - name: review_id
+        tests:
+          - not_null
+      - name: order_id
+        tests:
+          - not_null
+
+  - name: silver_products
+    description: "Produtos com medidas físicas"
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: silver_sellers
+    description: "Vendedores com cidade e estado padronizados"
+    columns:
+      - name: seller_id
+        tests:
+          - unique
+          - not_null
+
+  - name: silver_geolocation
+    description: "Geolocalização agregada por CEP"
+    columns:
+      - name: location_zip_code
+        tests:
+          - not_null
+
+  - name: silver_product_category_translation
+    description: "Tradução de categorias para inglês"
+    columns:
+      - name: category_name
+        tests:
+          - unique
+          - not_null

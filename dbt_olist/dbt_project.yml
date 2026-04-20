@@ -1,0 +1,19 @@
+name: dbt_olist
+version: '1.0.0'
+config-version: 2
+
+profile: dbt_olist
+
+model-paths: ["models"]
+
+models:
+  dbt_olist:
+    bronze:
+      +schema: bronze
+      +materialized: table
+    silver:
+      +schema: silver
+      +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table

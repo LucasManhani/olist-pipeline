@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: gold_monthly_revenue
+    description: "Faturamento e volume de pedidos por mês"
+    columns:
+      - name: month
+        tests:
+          - unique
+          - not_null
+      - name: total_orders
+        tests:
+          - not_null
+      - name: total_revenue
+        tests:
+          - not_null
+
+  - name: gold_average_ticket
+    description: "Ticket médio por mês"
+    columns:
+      - name: month
+        tests:
+          - unique
+          - not_null
+      - name: medium_ticket
+        tests:
+          - not_null
+
+  - name: gold_cancellation_rate
+    description: "Taxa de cancelamento por mês"
+    columns:
+      - name: month
+        tests:
+          - unique
+          - not_null
+      - name: cancellation_rate
+        tests:
+          - not_null
+
+  - name: gold_category_revenue
+    description: "Faturamento por categoria e mês"
+    columns:
+      - name: month
+        tests:
+          - not_null
+      - name: category
+      - name: total_revenue
+        tests:
+          - not_null
+
+  - name: gold_payment_methods
+    description: "Faturamento por método de pagamento e mês"
+    columns:
+      - name: month
+        tests:
+          - not_null
+      - name: payment_type
+      - name: total_revenue
