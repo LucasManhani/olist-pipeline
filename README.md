@@ -34,19 +34,22 @@ dbt — schema gold (métricas de negócio)
 
 ```
 olist-pipeline/
-├── data/                         # CSVs da Olist (não versionados)
+├── data/
+│   └── raw/                     # CSVs da Olist (não versionados)
 ├── pipeline/
 │   ├── extract.py               # leitura dos CSVs
 │   └── load.py                  # carga no Postgres
 ├── dbt_olist/
 │   ├── dbt_project.yml
+│   ├── profiles.yml
 │   ├── macros/
 │   │   └── generate_schema_name.sql
-│   └── models/
-│       ├── sources.yml          # testes na raw
-│       ├── bronze/              # tipagem correta
-│       ├── silver/              # limpeza e padronização
-│       └── gold/                # métricas de negócio
+│   ├── models/
+│   │   ├── sources.yml          # testes na raw
+│   │   ├── bronze/              # tipagem correta
+│   │   ├── silver/              # limpeza e padronização
+│   │   └── gold/                # métricas de negócio
+│   └── tests/                   # testes de chaves compostas
 ├── docker-compose.yml
 ├── .env.example
 └── requirements.txt
@@ -67,8 +70,9 @@ Dados com tipos corrigidos. As principais decisões foram:
 ### Silver
 Dados limpos e padronizados:
 - Colunas de data renomeadas para o padrão `*_at`
-- Cidades em lowercase sem acentos (usando `unaccent`)
+- Cidades em lowercase com espaços externos removidos
 - Estados em uppercase
+- CEPs padronizados com cinco dígitos
 - `silver_geolocation` agregada por CEP com média de coordenadas para eliminar duplicatas
 
 ### Gold
@@ -81,20 +85,21 @@ Cinco tabelas com métricas de vendas agregadas por mês:
 
 ## Qualidade de dados
 
-Realizados testes de qualidade com o dbt:
-- 21 testes na raw (validação dos dados originais)
-- 19 testes no silver (após transformações)
-- 16 testes no gold (nas métricas finais)
+Na última validação local, os 23 modelos foram construídos e os 85 testes passaram sem erros ou avisos:
+- 21 testes nas fontes raw
+- 21 testes na bronze
+- 30 testes na silver, incluindo chaves compostas e relacionamentos
+- 13 testes na gold
 
-Os testes validam unicidade de chaves primárias evitando duplicidade e ausência de nulos em colunas críticas.
+Os testes validam valores nulos, unicidade de chaves simples e compostas e integridade dos relacionamentos entre modelos.
 
 ## Como rodar
 
-**Pré-requisitos:** Docker, Python 3.13 (versões a cima podem ter incompatibilidade com o dbt) e Git.
+**Pré-requisitos:** Docker, Python 3.13 e Git.
 
 1. Clonar o repositório:
 ```bash
-git clone https://github.com/SEU_USUARIO/olist-pipeline.git
+git clone https://github.com/LucasManhani/olist-pipeline.git
 cd olist-pipeline
 ```
 
@@ -126,8 +131,8 @@ python pipeline/load.py
 7. Rodar o dbt:
 ```bash
 cd dbt_olist
-dbt run
-dbt test
+python -m dotenv -f ../.env run -- dbt run --profiles-dir .
+python -m dotenv -f ../.env run -- dbt test --profiles-dir .
 ```
 
 ## Decisões técnicas
