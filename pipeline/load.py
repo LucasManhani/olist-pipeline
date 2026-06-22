@@ -1,32 +1,74 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import URL, create_engine, text
 from extract import extract_all
 
-load_dotenv(Path(".env"))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+load_dotenv(PROJECT_ROOT / ".env")
 
-CONNECTION_STRING = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+REQUIRED_DB_VARIABLES = (
+    "DB_HOST",
+    "DB_PORT",
+    "DB_NAME",
+    "DB_USER",
+    "DB_PASSWORD",
+)
+
+
+def create_database_url() -> URL:
+    config = {
+        variable: os.getenv(variable)
+        for variable in REQUIRED_DB_VARIABLES
+    }
+    missing_variables = [
+        variable
+        for variable, value in config.items()
+        if not value
+    ]
+
+    if missing_variables:
+        missing = ", ".join(missing_variables)
+        raise ValueError(f"Missing required environment variables: {missing}")
+
+    try:
+        port = int(config["DB_PORT"])
+    except ValueError as error:
+        raise ValueError("DB_PORT must be an integer") from error
+
+    return URL.create(
+        drivername="postgresql+psycopg2",
+        username=config["DB_USER"],
+        password=config["DB_PASSWORD"],
+        host=config["DB_HOST"],
+        port=port,
+        database=config["DB_NAME"],
+    )
 
 
 def load():
-    engine = create_engine(CONNECTION_STRING)
-
-    with engine.connect() as conn:
-        conn.execute(text("CREATE SCHEMA IF NOT EXISTS raw"))
-        conn.commit()
-
     dataframes = extract_all()
+    engine = create_engine(create_database_url())
 
-    for table_name, df in dataframes.items():
-        df.to_sql(table_name, engine, schema="raw", if_exists="replace", index=False)
-        print(f"Loaded {table_name} into Postgres: {len(df)} rows x {len(df.columns)} columns")
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("CREATE SCHEMA IF NOT EXISTS raw"))
+
+            for table_name, df in dataframes.items():
+                df.to_sql(
+                    table_name,
+                    connection,
+                    schema="raw",
+                    if_exists="replace",
+                    index=False,
+                )
+                print(
+                    f"Loaded {table_name} into Postgres: "
+                    f"{len(df)} rows x {len(df.columns)} columns"
+                )
+    finally:
+        engine.dispose()
 
 
 if __name__ == "__main__":
