@@ -82,7 +82,7 @@ models:
         tests:
           - not_null
 
-  - name: bronze_product_category_translation
+  - name: bronze_product_category_name_translation
     description: "Tradução de categorias de produtos"
     columns:
       - name: product_category_name

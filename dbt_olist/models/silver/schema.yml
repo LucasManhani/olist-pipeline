@@ -11,6 +11,10 @@ models:
       - name: customer_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_customers')
+                field: customer_id
 
   - name: silver_customers
     description: "Clientes com cidade e estado padronizados"
@@ -29,15 +33,27 @@ models:
       - name: order_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
       - name: order_item_id
         tests:
           - not_null
       - name: product_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_products')
+                field: product_id
       - name: seller_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_sellers')
+                field: seller_id
 
   - name: silver_order_payments
     description: "Pagamentos dos pedidos"
@@ -45,6 +61,10 @@ models:
       - name: order_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
       - name: payment_sequential
         tests:
           - not_null
@@ -58,6 +78,10 @@ models:
       - name: order_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
 
   - name: silver_products
     description: "Produtos com medidas físicas"
@@ -80,12 +104,13 @@ models:
     columns:
       - name: location_zip_code
         tests:
+          - unique
           - not_null
 
-  - name: silver_product_category_translation
+  - name: silver_product_category_name_translation
     description: "Tradução de categorias para inglês"
     columns:
-      - name: category_name
+      - name: product_category_name
         tests:
           - unique
           - not_null
