@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_dates
+    description: "Dimensão de datas utilizada para análises temporais da camada Gold."
+
+    columns:
+      - name: date_id
+        description: "Chave única da data no formato YYYYMMDD."
+        tests:
+          - unique
+          - not_null
+
+      - name: full_date
+        description: "Data completa no formato date."
+        tests:
+          - unique
+          - not_null
+
+      - name: year
+        description: "Ano da data."
+        tests:
+          - not_null
+
+      - name: month
+        description: "Número do mês da data."
+        tests:
+          - not_null
+
+      - name: quarter
+        description: "Trimestre da data."
+        tests:
+          - not_null
+
+      - name: year_month
+        description: "Ano e mês da data no formato YYYY-MM."
+        tests:
+          - not_null
