@@ -36,3 +36,35 @@ models:
         description: "Ano e mês da data no formato YYYY-MM."
         tests:
           - not_null
+
+  - name: dim_customers
+    description: "Dimensão com os dados cadastrais e geográficos dos clientes."
+
+    columns:
+      - name: customer_id
+        description: "Identificador do cliente associado ao pedido."
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_unique_id
+        description: "Identificador utilizado para reconhecer o mesmo cliente em pedidos diferentes."
+        tests:
+          - not_null
+
+      - name: zip_code
+        description: "Prefixo do CEP do cliente."
+        tests:
+          - not_null
+
+      - name: city
+        description: "Cidade do cliente."
+
+      - name: state
+        description: "Estado do cliente."
+
+      - name: latitude
+        description: "Latitude média associada ao CEP do cliente."
+
+      - name: longitude
+        description: "Longitude média associada ao CEP do cliente."
