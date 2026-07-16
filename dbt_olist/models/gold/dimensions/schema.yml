@@ -68,3 +68,30 @@ models:
 
       - name: longitude
         description: "Longitude média associada ao CEP do cliente."
+
+  - name: dim_sellers
+    description: "Dimensão com os dados cadastrais e geográficos dos vendedores."
+
+    columns:
+      - name: seller_id
+        description: "Identificador do vendedor associado ao pedido."
+        tests:
+          - unique
+          - not_null
+
+      - name: zip_code
+        description: "Código postal do vendedor."
+        tests:
+          - not_null
+
+      - name: city
+        description: "Cidade do vendedor."
+
+      - name: state
+        description: "Estado do vendedor."
+
+      - name: latitude
+        description: "Latitude média associada ao CEP do vendedor."
+
+      - name: longitude
+        description: "Longitude média associada ao CEP do vendedor."
