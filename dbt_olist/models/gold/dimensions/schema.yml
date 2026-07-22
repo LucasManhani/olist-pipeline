@@ -95,3 +95,33 @@ models:
 
       - name: longitude
         description: "Longitude média associada ao CEP do vendedor."
+
+  - name: dim_products
+    description: "Dimensão com os produtos e suas descrições."
+
+    columns:
+      - name: product_id
+        description: "Identificador do produto associado ao pedido."
+        tests:
+          - unique
+          - not_null
+
+      - name: product_category_name
+        description: "Categoria de cada produto."
+        tests:
+          - not_null
+
+      - name: photos_qty
+        description: "Quantidade de fotos para cada produto."
+
+      - name: weight_g
+        description: "Peso de cada produto."
+
+      - name: length_cm
+        description: "Comprimento de cada produto."
+
+      - name: height_cm
+        description: "Altura de cada produto."
+
+      - name: width_cm
+        description: "Largura de cada produto."
