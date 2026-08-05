@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: fact_orders
+    description: "Fato de pedidos com identificadores, status e datas do ciclo de entrega."
+
+    columns:
+      - name: order_id
+        description: "Identificador único do pedido."
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Identificador do cliente associado ao pedido."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+      - name: order_status
+        description: "Situação atual do pedido."
+        tests:
+          - not_null
+
+      - name: purchase_date_id
+        description: "Chave da data em que o pedido foi realizado."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_id
+
+      - name: approved_date_id
+        description: "Chave da data de aprovação do pedido."
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_id
+
+      - name: shipped_date_id
+        description: "Chave da data de envio do pedido."
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_id
+
+      - name: delivered_date_id
+        description: "Chave da data de entrega do pedido."
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_id
+
+      - name: estimated_delivery_date_id
+        description: "Chave da data prevista para entrega."
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_id
+
+      - name: purchased_at
+        description: "Data e hora em que o pedido foi realizado."
+        tests:
+          - not_null
+
+      - name: approved_at
+        description: "Data e hora em que o pagamento foi aprovado."
+
+      - name: shipped_at
+        description: "Data e hora em que o pedido foi enviado."
+
+      - name: delivered_at
+        description: "Data e hora em que o pedido foi entregue."
+
+      - name: estimated_delivery_at
+        description: "Data e hora previstas para a entrega."
