@@ -23,6 +23,11 @@ WITH dates AS (
     SELECT estimated_delivery_at::date AS full_date
     FROM {{ ref('silver_orders') }}
 
+    UNION
+
+    SELECT shipping_limit_at::date AS full_date
+    FROM {{ ref('silver_order_items') }}
+
 )
 
 SELECT
