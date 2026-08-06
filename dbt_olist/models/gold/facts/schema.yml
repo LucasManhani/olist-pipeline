@@ -147,3 +147,59 @@ models:
         description: "Valor total do item, calculado pela soma do preço e do frete."
         tests:
           - not_null
+
+  - name: fact_payments
+    description: "Fato de pagamentos, com uma linha por sequência de pagamento de cada pedido."
+
+    columns:
+      - name: order_id
+        description: "Identificador do pedido associado ao pagamento."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fact_orders')
+                field: order_id
+
+      - name: payment_sequential
+        description: "Número sequencial do pagamento dentro do pedido."
+        tests:
+          - not_null
+
+      - name: payment_type
+        description: "Forma utilizada para realizar o pagamento."
+        tests:
+          - not_null
+
+      - name: payment_installments
+        description: "Quantidade de parcelas do pagamento."
+        tests:
+          - not_null
+
+      - name: payment_value
+        description: "Valor registrado para o pagamento."
+        tests:
+          - not_null
+
+      - name: customer_id
+        description: "Identificador do cliente associado ao pedido pago."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+      - name: purchase_date_id
+        description: "Chave da data em que o pedido pago foi realizado."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_id
+
+      - name: purchased_at
+        description: "Data e hora em que o pedido pago foi realizado."
+        tests:
+          - not_null
