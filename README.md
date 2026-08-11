@@ -9,7 +9,7 @@ O fluxo realiza ingestão, validação e transformação dos dados seguindo a ar
 - **Raw:** cópia dos dados de origem no PostgreSQL.
 - **Bronze:** correção de tipos e preparação técnica.
 - **Silver:** limpeza, padronização e deduplicação.
-- **Gold:** star schema e marts com métricas de negócio.
+- **Gold:** múltiplos star schemas e marts com métricas de negócio.
 
 O Apache Airflow coordena todas as etapas em uma única DAG. Cada camada só é executada quando a anterior termina com sucesso.
 
@@ -26,7 +26,7 @@ flowchart LR
         SOURCE_TESTS["dbt<br/>testes das fontes"]
         BRONZE["dbt Bronze<br/>tipagem"]
         SILVER["dbt Silver<br/>limpeza"]
-        GOLD["dbt Gold<br/>star schema + marts"]
+        GOLD["dbt Gold<br/>star schemas + marts"]
         PGADMIN["pgAdmin"]
     end
 
@@ -99,31 +99,35 @@ olist-pipeline/
 └── requirements.txt
 ```
 
-## Modelo dimensional
+## Modelo dimensional em star schemas
 
-A camada gold contém quatro dimensões e três fatos:
+A camada gold contém quatro dimensões conformadas e três fatos. Cada fato representa um processo de negócio e funciona como o centro do seu próprio star schema:
 
 ```mermaid
 flowchart TB
-    DATES["dim_dates"]
-    CUSTOMERS["dim_customers"]
-    PRODUCTS["dim_products"]
-    SELLERS["dim_sellers"]
+    subgraph DIMENSIONS["Dimensões conformadas"]
+        DATES["dim_dates"]
+        CUSTOMERS["dim_customers"]
+        PRODUCTS["dim_products"]
+        SELLERS["dim_sellers"]
+    end
 
-    ORDERS["fact_orders"]
-    ITEMS["fact_order_items"]
-    PAYMENTS["fact_payments"]
+    subgraph FACTS["Fatos por processo de negócio"]
+        ORDERS["fact_orders"]
+        ITEMS["fact_order_items"]
+        PAYMENTS["fact_payments"]
+    end
 
     DATES --> ORDERS
     CUSTOMERS --> ORDERS
-    ORDERS --> ITEMS
     PRODUCTS --> ITEMS
     SELLERS --> ITEMS
     DATES --> ITEMS
-    ORDERS --> PAYMENTS
     CUSTOMERS --> PAYMENTS
     DATES --> PAYMENTS
 ```
+
+O `order_id` está presente nas três fatos como uma **dimensão degenerada**: uma chave de negócio compartilhada que não possui uma tabela de dimensão própria. Ela permite rastrear o pedido e validar a integridade dos dados, sem representar uma ligação analítica direta entre fatos de granularidades diferentes.
 
 ### Dimensões
 
@@ -246,7 +250,7 @@ docker compose down
 - **Uma DAG com tasks separadas:** cada etapa possui logs e estado próprios, facilitando a identificação de falhas.
 - **LocalExecutor:** adequado para execução local e para o escopo deste projeto de portfólio.
 - **Testes raw antes das transformações:** falhas nas fontes interrompem a pipeline antes da bronze.
-- **Star schema na gold:** dimensões reutilizáveis e fatos com granularidades distintas evitam duplicações nas métricas.
+- **Múltiplos star schemas na gold:** cada processo possui sua própria fato e reutiliza dimensões conformadas, evitando joins diretos entre fatos com granularidades diferentes.
 - **Sem constraints físicas no warehouse:** integridade validada pelos testes do dbt, mantendo as transformações portáveis.
 - **Macro `generate_schema_name`:** gera os schemas `bronze`, `silver` e `gold` sem a concatenação padrão do dbt.
 - **Execução manual:** apropriada para um dataset histórico que não recebe novos registros periodicamente.
@@ -257,6 +261,6 @@ O dataset público da Olist contém aproximadamente 100 mil pedidos realizados e
 
 ## Próximas evoluções possíveis
 
-- Adicionar uma ferramenta de BI para consumir o star schema.
+- Adicionar uma ferramenta de BI para consumir os star schemas.
 - Criar integração contínua para validar o dbt a cada alteração.
 - Migrar armazenamento e orquestração para serviços gerenciados em nuvem.
