@@ -4,7 +4,10 @@ __pycache__/
 *.pyo
 .env
 *.csv
-logs/
+/logs/
+/dbt_olist/logs/
+/airflow/logs/*
+!/airflow/logs/.gitkeep
 target/
 dbt_packages/
 .user.yml
