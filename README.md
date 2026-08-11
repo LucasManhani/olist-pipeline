@@ -1,150 +1,262 @@
-# Olist Pipeline
+# Olist Data Pipeline
 
-Pipeline de engenharia de dados end-to-end construída com o dataset público da Olist, aplicando a arquitetura Medallion para transformar dados brutos de e-commerce em métricas de negócio prontas para análise.
+Pipeline de engenharia de dados end-to-end construída com o dataset público da Olist. O projeto combina Python, PostgreSQL, dbt, Docker e Apache Airflow para transformar arquivos CSV brutos em um modelo dimensional e métricas prontas para análise.
 
-## Sobre o projeto
+## Visão geral
 
-Este é um projeto de estudo em engenharia de dados onde construí uma pipeline ELT completa, desde a ingestão dos CSVs até a criação de tabelas analíticas com métricas de vendas. O foco foi entender o fundamento e fluxo de uma pipeline e arquitetura de dados, deixando muito espaço para novos updates de métricas, ferramentas e schemas para BI. 
+O fluxo realiza ingestão, validação e transformação dos dados seguindo a arquitetura Medallion:
+
+- **Raw:** cópia dos dados de origem no PostgreSQL.
+- **Bronze:** correção de tipos e preparação técnica.
+- **Silver:** limpeza, padronização e deduplicação.
+- **Gold:** star schema e marts com métricas de negócio.
+
+O Apache Airflow coordena todas as etapas em uma única DAG. Cada camada só é executada quando a anterior termina com sucesso.
 
 ## Arquitetura
 
+```mermaid
+flowchart LR
+    CSV["CSVs da Olist"]
+
+    subgraph DOCKER["Docker Compose"]
+        AIRFLOW["Apache Airflow<br/>LocalExecutor"]
+        PYTHON["Python<br/>pandas + SQLAlchemy"]
+        RAW[("PostgreSQL<br/>schema raw")]
+        SOURCE_TESTS["dbt<br/>testes das fontes"]
+        BRONZE["dbt Bronze<br/>tipagem"]
+        SILVER["dbt Silver<br/>limpeza"]
+        GOLD["dbt Gold<br/>star schema + marts"]
+        PGADMIN["pgAdmin"]
+    end
+
+    CSV --> PYTHON
+    AIRFLOW -. "orquestra" .-> PYTHON
+    PYTHON --> RAW
+    RAW --> SOURCE_TESTS
+    SOURCE_TESTS --> BRONZE
+    BRONZE --> SILVER
+    SILVER --> GOLD
+    PGADMIN -. "consulta" .-> RAW
 ```
-CSVs Olist
-    ↓
-Python (extract + load)
-    ↓
-Postgres — schema raw
-    ↓
-dbt — schema bronze (tipagem correta)
-    ↓
-dbt — schema silver (limpeza e padronização)
-    ↓
-dbt — schema gold (métricas de negócio)
+
+Ordem das tasks no Airflow:
+
+```text
+load_raw → dbt_source_tests → dbt_bronze → dbt_silver → dbt_gold
 ```
+
+## Execução no Airflow
+
+![Execução bem-sucedida da DAG Olist](docs/images/airflow-dag-success.png)
+
+A DAG usa `schedule=None` porque o dataset é histórico e estático. A execução é iniciada manualmente pela interface do Airflow, sem reprocessamentos automáticos desnecessários.
 
 ## Ferramentas
 
-- **Python** — Extração dos dados dos arquivos CSV e carga no Postgres (pandas + SQLAlchemy)
-- **Postgres** — Armazenamento dos dados em arquitetura Medallion
-- **Docker Compose** — Orquestração do ambiente local em container (Postgres + pgAdmin)
-- **dbt Core** — Transformações dos dados e testes de qualidade.
-- **Git** — Versionamento
+- **Apache Airflow 3:** orquestração, dependências, tentativas e logs das tasks.
+- **Python 3.13:** leitura e carga dos CSVs com pandas e SQLAlchemy.
+- **PostgreSQL 16:** armazenamento das camadas raw, bronze, silver e gold.
+- **dbt Core:** transformações SQL, documentação e testes de qualidade.
+- **Docker Compose:** ambiente local reproduzível com os serviços da pipeline.
+- **pgAdmin:** inspeção e consultas no PostgreSQL.
+- **Git e GitHub:** versionamento e publicação do projeto.
 
 ## Estrutura do projeto
 
-```
+```text
 olist-pipeline/
+├── airflow/
+│   ├── dags/
+│   │   └── olist_pipeline.py
+│   ├── logs/
+│   ├── plugins/
+│   ├── Dockerfile
+│   └── requirements.txt
 ├── data/
-│   └── raw/                     # CSVs da Olist (não versionados)
-├── pipeline/
-│   ├── extract.py               # leitura dos CSVs
-│   └── load.py                  # carga no Postgres
+│   └── raw/                         # CSVs não versionados
 ├── dbt_olist/
-│   ├── dbt_project.yml
-│   ├── profiles.yml
 │   ├── macros/
 │   │   └── generate_schema_name.sql
 │   ├── models/
-│   │   ├── sources.yml          # testes na raw
-│   │   ├── bronze/              # tipagem correta
-│   │   ├── silver/              # limpeza e padronização
-│   │   └── gold/                # métricas de negócio
-│   └── tests/                   # testes de chaves compostas
-├── docker-compose.yml
+│   │   ├── bronze/
+│   │   ├── silver/
+│   │   └── gold/
+│   │       ├── dimensions/
+│   │       ├── facts/
+│   │       └── marts/
+│   ├── dbt_project.yml
+│   └── profiles.yml
+├── docs/
+│   └── images/
+│       └── airflow-dag-success.png
+├── pipeline/
+│   ├── extract.py
+│   └── load.py
 ├── .env.example
+├── docker-compose.yml
+├── README.md
 └── requirements.txt
 ```
 
-## Camadas
+## Modelo dimensional
 
-### Raw
-Dados brutos dos CSVs carregados pelo Python. Nenhuma transformação — serve como referência de origem dos dados.
+A camada gold contém quatro dimensões e três fatos:
 
-### Bronze
-Dados com tipos corrigidos. As principais decisões foram:
-- CEPs como `text` para preservar zeros à esquerda
-- Datas convertidas de `text` para `timestamp`
-- Valores monetários convertidos de `double precision` para `numeric` evitando arredondamentos
-- IDs como `text` porque são hashes e não números sequenciais
+```mermaid
+flowchart TB
+    DATES["dim_dates"]
+    CUSTOMERS["dim_customers"]
+    PRODUCTS["dim_products"]
+    SELLERS["dim_sellers"]
 
-### Silver
-Dados limpos e padronizados:
-- Colunas de data renomeadas para o padrão `*_at`
-- Cidades em lowercase com espaços externos removidos
-- Estados em uppercase
-- CEPs padronizados com cinco dígitos
-- `silver_geolocation` agregada por CEP com média de coordenadas para eliminar duplicatas
+    ORDERS["fact_orders"]
+    ITEMS["fact_order_items"]
+    PAYMENTS["fact_payments"]
 
-### Gold
-Cinco tabelas com métricas de vendas agregadas por mês:
-- `gold_monthly_revenue` — faturamento e volume de pedidos
-- `gold_average_ticket` — ticket médio
-- `gold_cancellation_rate` — taxa de cancelamento
-- `gold_category_revenue` — faturamento por categoria
-- `gold_payment_methods` — faturamento por método de pagamento
+    DATES --> ORDERS
+    CUSTOMERS --> ORDERS
+    ORDERS --> ITEMS
+    PRODUCTS --> ITEMS
+    SELLERS --> ITEMS
+    DATES --> ITEMS
+    ORDERS --> PAYMENTS
+    CUSTOMERS --> PAYMENTS
+    DATES --> PAYMENTS
+```
 
-## Qualidade de dados
+### Dimensões
 
-Na última validação local, os 23 modelos foram construídos e os 85 testes passaram sem erros ou avisos:
-- 21 testes nas fontes raw
-- 21 testes na bronze
-- 30 testes na silver, incluindo chaves compostas e relacionamentos
-- 13 testes na gold
+- `dim_dates`: calendário analítico compartilhado pelas fatos.
+- `dim_customers`: dados cadastrais e geográficos dos clientes.
+- `dim_products`: categorias e características físicas dos produtos.
+- `dim_sellers`: dados cadastrais e geográficos dos vendedores.
 
-Os testes validam valores nulos, unicidade de chaves simples e compostas e integridade dos relacionamentos entre modelos.
+### Fatos
 
-## Como rodar
+- `fact_orders`: ciclo de vida dos pedidos e suas datas.
+- `fact_order_items`: itens vendidos, preço, frete, produto e vendedor.
+- `fact_payments`: pagamentos, parcelas, valores e tipo de pagamento.
 
-**Pré-requisitos:** Docker, Python 3.13 e Git.
+### Marts
 
-1. Clonar o repositório:
+- `gold_monthly_revenue`: faturamento e volume de pedidos por mês.
+- `gold_average_ticket`: ticket médio mensal.
+- `gold_cancellation_rate`: taxa de cancelamento.
+- `gold_category_revenue`: faturamento por categoria.
+- `gold_payment_methods`: faturamento por método de pagamento.
+
+## Qualidade dos dados
+
+Na última validação completa, o projeto construiu **30 modelos** e executou **141 testes** sem erros:
+
+- 21 testes nas fontes raw.
+- 21 testes na bronze.
+- 30 testes na silver.
+- 69 testes na gold.
+
+Os testes cobrem valores nulos, unicidade, chaves compostas e integridade dos relacionamentos entre fontes, dimensões e fatos.
+
+## Como executar
+
+### Pré-requisitos
+
+- Docker Desktop com Docker Compose.
+- Git.
+
+### 1. Clonar o repositório
+
 ```bash
 git clone https://github.com/LucasManhani/olist-pipeline.git
 cd olist-pipeline
 ```
 
-2. Criar o `.env` com base no `.env.example`:
+### 2. Criar o arquivo de ambiente
+
+No PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+No Linux ou macOS:
+
 ```bash
 cp .env.example .env
 ```
 
-3. Subir o ambiente:
-```bash
-docker compose up -d
+Edite o `.env`, defina as credenciais locais e substitua `AIRFLOW_JWT_SECRET` por uma chave aleatória com pelo menos 64 bytes. O mesmo valor é compartilhado pelo scheduler e pelo API Server do Airflow.
+
+### 3. Adicionar o dataset
+
+Baixe o dataset [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) e coloque os arquivos CSV em:
+
+```text
+data/raw/
 ```
 
-4. Instalar dependências Python:
+Os CSVs não são versionados no Git.
+
+### 4. Construir e iniciar o ambiente
+
 ```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+docker compose up --build -d
 ```
 
-5. Baixar os CSVs da Olist no Kaggle e colocar em `data/raw/`:
-[https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
+Confira os serviços:
 
-6. Executar a ingestão:
 ```bash
-python pipeline/load.py
+docker compose ps
 ```
 
-7. Rodar o dbt:
+Os componentes do Airflow e os bancos devem aparecer como `healthy`.
+
+### 5. Executar a pipeline
+
+1. Acesse o Airflow em [http://localhost:8081](http://localhost:8081).
+2. Localize e ative a DAG `olist_pipeline`.
+3. Clique em **Acionar** para iniciar uma execução manual.
+4. Acompanhe o estado e os logs de cada task pela interface.
+
+O pgAdmin fica disponível em [http://localhost:8080](http://localhost:8080).
+
+### Comandos úteis
+
+Exibir o estado dos serviços:
+
 ```bash
-cd dbt_olist
-python -m dotenv -f ../.env run -- dbt run --profiles-dir .
-python -m dotenv -f ../.env run -- dbt test --profiles-dir .
+docker compose ps
+```
+
+Acompanhar os logs do scheduler:
+
+```bash
+docker compose logs -f airflow-scheduler
+```
+
+Encerrar os serviços preservando os volumes:
+
+```bash
+docker compose down
 ```
 
 ## Decisões técnicas
 
-Algumas escolhas que moldaram o projeto:
+- **ELT em vez de ETL:** os dados brutos são carregados antes das transformações realizadas no PostgreSQL pelo dbt.
+- **Uma DAG com tasks separadas:** cada etapa possui logs e estado próprios, facilitando a identificação de falhas.
+- **LocalExecutor:** adequado para execução local e para o escopo deste projeto de portfólio.
+- **Testes raw antes das transformações:** falhas nas fontes interrompem a pipeline antes da bronze.
+- **Star schema na gold:** dimensões reutilizáveis e fatos com granularidades distintas evitam duplicações nas métricas.
+- **Sem constraints físicas no warehouse:** integridade validada pelos testes do dbt, mantendo as transformações portáveis.
+- **Macro `generate_schema_name`:** gera os schemas `bronze`, `silver` e `gold` sem a concatenação padrão do dbt.
+- **Execução manual:** apropriada para um dataset histórico que não recebe novos registros periodicamente.
 
-- **ELT em vez de ETL** — dados brutos carregados primeiro, transformações depois no banco com dbt
-- **Macro `generate_schema_name`** — para obter schemas limpos (`bronze`, `silver`, `gold`) em vez da concatenação padrão do dbt
-- **Sem constraints físicas** — optei por testes do dbt em vez de PK/FK físicas, seguindo o padrão de Data Warehouses modernos
-- **Faturamento via `order_items`** na tabela de categoria — para evitar duplicação causada pela relação 1:N entre pedidos e itens
+## Dataset
 
+O dataset público da Olist contém aproximadamente 100 mil pedidos realizados entre 2016 e 2018, com informações sobre clientes, produtos, vendedores, pagamentos, entregas e avaliações.
 
-## Sobre o dataset
+## Próximas evoluções possíveis
 
-Dados públicos da Olist, plataforma brasileira de e-commerce, disponibilizados no Kaggle. Contém aproximadamente 100 mil pedidos realizados entre 2016 e 2018, com informações de clientes, produtos, vendedores, pagamentos, entregas e avaliações.
+- Adicionar uma ferramenta de BI para consumir o star schema.
+- Criar integração contínua para validar o dbt a cada alteração.
+- Migrar armazenamento e orquestração para serviços gerenciados em nuvem.

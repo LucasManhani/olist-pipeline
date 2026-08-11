@@ -23,6 +23,17 @@ with DAG(
         do_xcom_push=False,
     )
 
+    dbt_source_tests = BashOperator(
+        task_id="dbt_source_tests",
+        bash_command=(
+            "dbt test "
+            "--select 'source:*' "
+            "--profiles-dir ."
+        ),
+        cwd="/opt/airflow/project/dbt_olist",
+        do_xcom_push=False,
+    )
+
     dbt_bronze = BashOperator(
         task_id="dbt_bronze",
         bash_command=(
@@ -56,4 +67,4 @@ with DAG(
         do_xcom_push=False,
     )
 
-    load_raw >> dbt_bronze >> dbt_silver >> dbt_gold
+    load_raw >> dbt_source_tests >> dbt_bronze >> dbt_silver >> dbt_gold
