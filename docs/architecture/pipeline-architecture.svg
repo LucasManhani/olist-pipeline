@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="800" viewBox="0 0 1600 800" role="img" aria-labelledby="title description">
+  <title id="title">Arquitetura do Olist Data Pipeline</title>
+  <desc id="description">Arquivos CSV da Olist são carregados por Python no schema raw do PostgreSQL. O dbt transforma os dados nas camadas bronze, silver e gold. Airflow e Docker Compose orquestram o fluxo localmente, enquanto o pgAdmin permite inspeção.</desc>
+
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563EB"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/>
+    </marker>
+    <style>
+      .title { font-family: "Segoe UI", Arial, sans-serif; font-size: 30px; font-weight: 700; fill: #172033; }
+      .subtitle { font-family: "Segoe UI", Arial, sans-serif; font-size: 16px; font-weight: 400; fill: #667085; }
+      .node-title { font-family: "Segoe UI", Arial, sans-serif; font-size: 20px; font-weight: 700; fill: #172033; }
+      .node-subtitle { font-family: "Segoe UI", Arial, sans-serif; font-size: 14px; font-weight: 600; fill: #344054; }
+      .node-detail { font-family: "Segoe UI", Arial, sans-serif; font-size: 13px; font-weight: 400; fill: #667085; }
+      .group-title { font-family: "Segoe UI", Arial, sans-serif; font-size: 18px; font-weight: 700; fill: #172033; }
+      .layer-title { font-family: "Segoe UI", Arial, sans-serif; font-size: 17px; font-weight: 700; fill: #172033; }
+      .layer-detail { font-family: "Segoe UI", Arial, sans-serif; font-size: 12px; font-weight: 400; fill: #667085; }
+      .flow-label { font-family: "Segoe UI", Arial, sans-serif; font-size: 12px; font-weight: 600; fill: #475467; }
+      .task-text { font-family: "Segoe UI", Arial, sans-serif; font-size: 12px; font-weight: 600; fill: #344054; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="800" fill="#F7F9FC"/>
+
+  <text x="70" y="56" class="title">Olist Data Pipeline</text>
+  <text x="70" y="86" class="subtitle">ELT local • PostgreSQL • arquitetura Medallion • modelos dimensionais</text>
+  <circle cx="1280" cy="62" r="5" fill="#12B76A"/>
+  <text x="1294" y="67" class="node-detail">Arquitetura implementada</text>
+
+  <rect x="70" y="266" width="220" height="150" rx="18" fill="#FFFFFF" stroke="#D0D5DD" stroke-width="1.5"/>
+  <path d="M 88 266 H 272 A 18 18 0 0 1 290 284 V 290 H 70 V 284 A 18 18 0 0 1 88 266 Z" fill="#1F6FEB"/>
+  <circle cx="112" cy="331" r="26" fill="#E8F1FD"/>
+  <path d="M 99 315 H 119 L 127 323 V 348 H 99 Z M 119 315 V 324 H 127 M 104 332 H 122 M 104 338 H 122 M 104 344 H 118" fill="none" stroke="#1F6FEB" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="150" y="326" class="node-title">Dataset Olist</text>
+  <text x="150" y="349" class="node-subtitle">9 arquivos CSV</text>
+  <text x="92" y="385" class="node-detail">≈ 100 mil pedidos históricos</text>
+
+  <rect x="355" y="266" width="250" height="150" rx="18" fill="#FFFFFF" stroke="#D0D5DD" stroke-width="1.5"/>
+  <path d="M 373 266 H 587 A 18 18 0 0 1 605 284 V 290 H 355 V 284 A 18 18 0 0 1 373 266 Z" fill="#3776AB"/>
+  <circle cx="401" cy="331" r="26" fill="#EAF2F8"/>
+  <text x="401" y="338" text-anchor="middle" font-family="Consolas, monospace" font-size="17" font-weight="700" fill="#3776AB">&lt;/&gt;</text>
+  <text x="441" y="326" class="node-title">Carga Python</text>
+  <text x="441" y="349" class="node-subtitle">Extração e load</text>
+  <text x="378" y="385" class="node-detail">pandas • SQLAlchemy</text>
+
+  <line x1="290" y1="341" x2="345" y2="341" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect x="295" y="307" width="48" height="22" rx="11" fill="#EEF4FF"/>
+  <text x="319" y="322" text-anchor="middle" class="flow-label">CSV</text>
+
+  <rect x="700" y="130" width="830" height="450" rx="20" fill="#FFFFFF" stroke="#B8C4D6" stroke-width="1.5"/>
+  <circle cx="738" cy="170" r="19" fill="#EAF2FF"/>
+  <ellipse cx="738" cy="163" rx="11" ry="4" fill="none" stroke="#336791" stroke-width="2"/>
+  <path d="M 727 163 V 178 C 727 181 732 183 738 183 C 744 183 749 181 749 178 V 163 M 727 170 C 727 173 732 175 738 175 C 744 175 749 173 749 170" fill="none" stroke="#336791" stroke-width="2"/>
+  <text x="770" y="176" class="group-title">PostgreSQL 16 • data warehouse analítico</text>
+  <rect x="1280" y="151" width="215" height="38" rx="19" fill="#EEF4FF"/>
+  <circle cx="1301" cy="170" r="6" fill="#FF694B"/>
+  <text x="1315" y="175" class="flow-label">dbt Core + testes</text>
+
+  <rect x="735" y="250" width="175" height="180" rx="14" fill="#F4F8FF" stroke="#8DB5F5" stroke-width="1.5"/>
+  <rect x="735" y="250" width="175" height="8" rx="4" fill="#1F6FEB"/>
+  <ellipse cx="770" cy="303" rx="18" ry="6" fill="none" stroke="#1F6FEB" stroke-width="2"/>
+  <path d="M 752 303 V 324 C 752 328 760 331 770 331 C 780 331 788 328 788 324 V 303 M 752 313 C 752 317 760 320 770 320 C 780 320 788 317 788 313" fill="none" stroke="#1F6FEB" stroke-width="2"/>
+  <text x="804" y="305" class="layer-title">Raw</text>
+  <text x="804" y="325" class="layer-detail">cópia da fonte</text>
+  <text x="757" y="369" class="layer-detail">9 tabelas substituídas</text>
+  <text x="757" y="391" class="layer-detail">a cada execução</text>
+
+  <rect x="935" y="250" width="175" height="180" rx="14" fill="#FFFCF5" stroke="#E7C98A" stroke-width="1.5"/>
+  <rect x="935" y="250" width="175" height="8" rx="4" fill="#B7791F"/>
+  <ellipse cx="970" cy="303" rx="18" ry="6" fill="none" stroke="#B7791F" stroke-width="2"/>
+  <path d="M 952 303 V 324 C 952 328 960 331 970 331 C 980 331 988 328 988 324 V 303 M 952 313 C 952 317 960 320 970 320 C 980 320 988 317 988 313" fill="none" stroke="#B7791F" stroke-width="2"/>
+  <text x="1004" y="305" class="layer-title">Bronze</text>
+  <text x="1004" y="325" class="layer-detail">preparação técnica</text>
+  <text x="957" y="369" class="layer-detail">tipagem inicial</text>
+  <text x="957" y="391" class="layer-detail">e padronização</text>
+
+  <rect x="1135" y="250" width="175" height="180" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <rect x="1135" y="250" width="175" height="8" rx="4" fill="#64748B"/>
+  <ellipse cx="1170" cy="303" rx="18" ry="6" fill="none" stroke="#64748B" stroke-width="2"/>
+  <path d="M 1152 303 V 324 C 1152 328 1160 331 1170 331 C 1180 331 1188 328 1188 324 V 303 M 1152 313 C 1152 317 1160 320 1170 320 C 1180 320 1188 317 1188 313" fill="none" stroke="#64748B" stroke-width="2"/>
+  <text x="1204" y="305" class="layer-title">Silver</text>
+  <text x="1204" y="325" class="layer-detail">dados confiáveis</text>
+  <text x="1157" y="369" class="layer-detail">limpeza • deduplicação</text>
+  <text x="1157" y="391" class="layer-detail">regras de qualidade</text>
+
+  <rect x="1335" y="250" width="160" height="180" rx="14" fill="#FFFBEB" stroke="#E8CF72" stroke-width="1.5"/>
+  <rect x="1335" y="250" width="160" height="8" rx="4" fill="#D4A017"/>
+  <ellipse cx="1370" cy="303" rx="18" ry="6" fill="none" stroke="#D4A017" stroke-width="2"/>
+  <path d="M 1352 303 V 324 C 1352 328 1360 331 1370 331 C 1380 331 1388 328 1388 324 V 303 M 1352 313 C 1352 317 1360 320 1370 320 C 1380 320 1388 317 1388 313" fill="none" stroke="#D4A017" stroke-width="2"/>
+  <text x="1404" y="305" class="layer-title">Gold</text>
+  <text x="1404" y="325" class="layer-detail">uso analítico</text>
+  <text x="1357" y="369" class="layer-detail">dimensões • fatos</text>
+  <text x="1357" y="391" class="layer-detail">marts de negócio</text>
+
+  <path d="M 605 341 C 650 341 670 341 725 341" fill="none" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect x="620" y="307" width="88" height="22" rx="11" fill="#EEF4FF"/>
+  <text x="664" y="322" text-anchor="middle" class="flow-label">DataFrames</text>
+  <line x1="910" y1="341" x2="925" y2="341" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow-muted)"/>
+  <line x1="1110" y1="341" x2="1125" y2="341" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow-muted)"/>
+  <line x1="1310" y1="341" x2="1325" y2="341" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow-muted)"/>
+
+  <rect x="1100" y="475" width="395" height="70" rx="14" fill="#F7F9FC" stroke="#D0D5DD"/>
+  <circle cx="1132" cy="510" r="18" fill="#FFF4E8"/>
+  <path d="M 1122 504 H 1142 V 518 H 1122 Z M 1126 500 H 1138 V 504 M 1128 508 H 1136 M 1128 512 H 1136" fill="none" stroke="#F97316" stroke-width="2" stroke-linejoin="round"/>
+  <text x="1162" y="507" class="node-subtitle">pgAdmin</text>
+  <text x="1162" y="527" class="node-detail">inspeção e consultas no PostgreSQL</text>
+
+  <line x1="480" y1="416" x2="480" y2="630" stroke="#7C8EAA" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <line x1="1110" y1="580" x2="1110" y2="630" stroke="#7C8EAA" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <rect x="355" y="630" width="1175" height="105" rx="18" fill="#EEF4FF" stroke="#7AA7F8" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <g transform="translate(385 650)">
+    <path d="M 18 0 L 27 13 L 18 18 L 13 9 Z" fill="#00C7D4"/>
+    <path d="M 36 18 L 23 27 L 18 18 L 27 13 Z" fill="#7B61FF"/>
+    <path d="M 18 36 L 9 23 L 18 18 L 23 27 Z" fill="#F43F5E"/>
+    <path d="M 0 18 L 13 9 L 18 18 L 9 23 Z" fill="#22C55E"/>
+    <circle cx="18" cy="18" r="4" fill="#FFFFFF"/>
+  </g>
+  <text x="435" y="660" class="node-subtitle">Airflow 3 + Docker Compose</text>
+  <text x="435" y="681" class="node-detail">execução manual • retries • logs</text>
+
+  <g>
+    <rect x="650" y="652" width="150" height="48" rx="12" fill="#FFFFFF" stroke="#B8C9E8"/>
+    <circle cx="674" cy="676" r="13" fill="#2563EB"/><text x="674" y="681" text-anchor="middle" font-family="Segoe UI, Arial" font-size="12" font-weight="700" fill="#FFFFFF">1</text>
+    <text x="696" y="681" class="task-text">load raw</text>
+    <line x1="805" y1="676" x2="831" y2="676" stroke="#64748B" stroke-width="2" marker-end="url(#arrow-muted)"/>
+
+    <rect x="842" y="652" width="165" height="48" rx="12" fill="#FFFFFF" stroke="#B8C9E8"/>
+    <circle cx="866" cy="676" r="13" fill="#FF694B"/><text x="866" y="681" text-anchor="middle" font-family="Segoe UI, Arial" font-size="12" font-weight="700" fill="#FFFFFF">2</text>
+    <text x="888" y="681" class="task-text">source tests</text>
+    <line x1="1012" y1="676" x2="1038" y2="676" stroke="#64748B" stroke-width="2" marker-end="url(#arrow-muted)"/>
+
+    <rect x="1049" y="652" width="135" height="48" rx="12" fill="#FFFFFF" stroke="#B8C9E8"/>
+    <circle cx="1073" cy="676" r="13" fill="#B7791F"/><text x="1073" y="681" text-anchor="middle" font-family="Segoe UI, Arial" font-size="12" font-weight="700" fill="#FFFFFF">3</text>
+    <text x="1095" y="681" class="task-text">bronze</text>
+    <line x1="1189" y1="676" x2="1215" y2="676" stroke="#64748B" stroke-width="2" marker-end="url(#arrow-muted)"/>
+
+    <rect x="1226" y="652" width="125" height="48" rx="12" fill="#FFFFFF" stroke="#B8C9E8"/>
+    <circle cx="1250" cy="676" r="13" fill="#64748B"/><text x="1250" y="681" text-anchor="middle" font-family="Segoe UI, Arial" font-size="12" font-weight="700" fill="#FFFFFF">4</text>
+    <text x="1272" y="681" class="task-text">silver</text>
+    <line x1="1356" y1="676" x2="1382" y2="676" stroke="#64748B" stroke-width="2" marker-end="url(#arrow-muted)"/>
+
+    <rect x="1393" y="652" width="110" height="48" rx="12" fill="#FFFFFF" stroke="#B8C9E8"/>
+    <circle cx="1417" cy="676" r="13" fill="#D4A017"/><text x="1417" y="681" text-anchor="middle" font-family="Segoe UI, Arial" font-size="12" font-weight="700" fill="#FFFFFF">5</text>
+    <text x="1439" y="681" class="task-text">gold</text>
+  </g>
+
+  <text x="1530" y="770" text-anchor="end" class="node-detail">Ambiente local reproduzível • dados públicos da Olist</text>
+</svg>
